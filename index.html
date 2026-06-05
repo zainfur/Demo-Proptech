@@ -156,8 +156,24 @@
       transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
     }
 
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
+    a.button {
+      border-radius: var(--radius);
+      min-height: 44px;
+      padding: 0 14px;
+      font: inherit;
+      font-weight: 750;
+      color: var(--ink);
+      background: #e8edf2;
+      cursor: pointer;
+      transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover, a.button:hover { transform: translateY(-1px); }
+    button:active, a.button:active { transform: translateY(0); }
 
     .primary {
       flex: 1;
@@ -845,7 +861,7 @@
         </div>
         <footer class="footer">
           <button class="secondary" data-go="survey">Survey</button>
-          <button class="primary">Export PDF</button>
+          <a class="button primary" href="sample-condition-report.pdf" download="sample-condition-report.pdf">Export PDF</a>
         </footer>
       </section>
     </div>
