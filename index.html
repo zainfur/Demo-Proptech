@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SurveyAI Report Demo</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #687381;
+      --line: #dde3ea;
+      --soft: #f5f7fa;
+      --panel: #ffffff;
+      --brand: #126f68;
+      --brand-2: #d86032;
+      --blue: #326fd1;
+      --yellow: #f3b23e;
+      --ok: #198754;
+      --danger: #b64242;
+      --shadow: 0 18px 45px rgba(23, 32, 42, .15);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(18, 111, 104, .16), rgba(216, 96, 50, .12)),
+        #eef2f5;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .stage {
+      width: min(100%, 980px);
+      display: grid;
+      grid-template-columns: 390px minmax(280px, 1fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .phone {
+      width: 390px;
+      height: 820px;
+      max-height: calc(100vh - 48px);
+      border: 10px solid #10151b;
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      background: var(--panel);
+      position: relative;
+    }
+
+    .screen {
+      height: 100%;
+      display: none;
+      grid-template-rows: auto 1fr auto;
+      background: var(--soft);
+    }
+
+    .screen.active { display: grid; }
+
+    .topbar {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 16px 18px 12px;
+    }
+
+    .status {
+      height: 14px;
+      display: flex;
+      justify-content: space-between;
+      color: #44505d;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .bars {
+      display: flex;
+      gap: 3px;
+      align-items: end;
+    }
+
+    .bars span {
+      width: 3px;
+      background: #44505d;
+      border-radius: 2px;
+    }
+
+    .bars span:nth-child(1) { height: 5px; }
+    .bars span:nth-child(2) { height: 7px; }
+    .bars span:nth-child(3) { height: 9px; }
+    .bars span:nth-child(4) { height: 11px; }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 6px;
+    }
+
+    .body {
+      padding: 16px;
+      overflow: auto;
+    }
+
+    .footer {
+      background: var(--panel);
+      border-top: 1px solid var(--line);
+      padding: 12px 16px 18px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: var(--radius);
+      min-height: 44px;
+      padding: 0 14px;
+      font: inherit;
+      font-weight: 750;
+      color: var(--ink);
+      background: #e8edf2;
+      cursor: pointer;
+      transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      flex: 1;
+      color: white;
+      background: var(--brand);
+      box-shadow: 0 8px 18px rgba(18, 111, 104, .24);
+    }
+
+    .secondary {
+      background: #edf1f5;
+      color: #26323f;
+    }
+
+    .ghost {
+      min-height: 36px;
+      padding: 0 10px;
+      background: transparent;
+      color: var(--brand);
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .search {
+      margin-top: 14px;
+      height: 42px;
+      border: 1px solid var(--line);
+      background: #f7f9fb;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .template-card, .block, .mini-card, .report-section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    .template-card {
+      padding: 14px;
+      margin-bottom: 12px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .template-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      border-radius: 999px;
+      background: #edf3f2;
+      color: #24625e;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .chip.orange {
+      background: #fff0e9;
+      color: #a74e2c;
+    }
+
+    .section-label {
+      margin: 18px 0 9px;
+      color: #4d5967;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .builder-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .toolbox {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .tool {
+      min-height: 58px;
+      border: 1px dashed #b8c4cf;
+      background: #fff;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 8px;
+      border-radius: var(--radius);
+      cursor: grab;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tool span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .canvas {
+      min-height: 270px;
+      border: 1px dashed #a9b7c4;
+      border-radius: var(--radius);
+      padding: 10px;
+      background: #eef4f3;
+      display: grid;
+      gap: 9px;
+      align-content: start;
+    }
+
+    .canvas.drag-over {
+      border-color: var(--brand);
+      background: #e1efed;
+    }
+
+    .block {
+      padding: 11px;
+      display: grid;
+      gap: 7px;
+      cursor: grab;
+    }
+
+    .block-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .handle {
+      color: #74808d;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .instruction {
+      color: var(--muted);
+      background: #f5f7fa;
+      border: 1px solid #e3e8ee;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .survey-address {
+      min-height: 128px;
+      background: linear-gradient(135deg, rgba(18, 111, 104, .86), rgba(50, 111, 209, .78)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='390' height='160' viewBox='0 0 390 160'%3E%3Crect width='390' height='160' fill='%23dce7e6'/%3E%3Cpath d='M45 116V66l62-36 61 36v50z' fill='%23fff' opacity='.75'/%3E%3Cpath d='M218 116V54h92v62z' fill='%23fff' opacity='.65'/%3E%3Cpath d='M27 119h333' stroke='%23fff' stroke-width='7' opacity='.55'/%3E%3C/svg%3E");
+      background-size: cover;
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 16px;
+      display: grid;
+      align-content: end;
+      gap: 4px;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .mini-card {
+      padding: 12px;
+      min-height: 82px;
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+    }
+
+    .mini-card strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .metric {
+      font-size: 23px;
+      font-weight: 850;
+      color: var(--brand);
+    }
+
+    .record-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: grid;
+      justify-items: center;
+      gap: 13px;
+    }
+
+    .record-ring {
+      width: 128px;
+      height: 128px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, #f7d5c8 0 31%, #fff 32% 43%, rgba(216, 96, 50, .18) 44% 100%);
+      border: 1px solid #f2c2b1;
+      display: grid;
+      place-items: center;
+      color: var(--brand-2);
+      font-size: 42px;
+      font-weight: 900;
+      position: relative;
+    }
+
+    .record-ring.recording::after {
+      content: "";
+      position: absolute;
+      inset: -9px;
+      border-radius: 50%;
+      border: 3px solid rgba(216, 96, 50, .24);
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(.9); opacity: 1; }
+      to { transform: scale(1.15); opacity: .15; }
+    }
+
+    .timer {
+      font-size: 30px;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .transcript {
+      display: grid;
+      gap: 8px;
+    }
+
+    .line {
+      background: #fff;
+      border-left: 4px solid var(--blue);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 13px;
+      line-height: 1.42;
+      color: #2b3541;
+    }
+
+    .line.hidden { display: none; }
+
+    .tag-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .progress-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 100%;
+      gap: 18px;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .ai-mark {
+      width: 126px;
+      height: 126px;
+      border-radius: 50%;
+      background: conic-gradient(var(--brand) var(--angle), #d8e2ea 0);
+      display: grid;
+      place-items: center;
+      color: var(--brand);
+      font-size: 30px;
+      font-weight: 900;
+      position: relative;
+    }
+
+    .ai-mark::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .ai-mark span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .progress-list {
+      width: 100%;
+      display: grid;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .step {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 11px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #b8c4cf;
+      flex: 0 0 auto;
+    }
+
+    .step.done {
+      color: var(--ink);
+    }
+
+    .step.done .dot {
+      background: var(--ok);
+      border-color: var(--ok);
+      box-shadow: inset 0 0 0 4px white;
+    }
+
+    .report-section {
+      padding: 13px;
+      margin-bottom: 10px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .report-section.ai {
+      border-color: rgba(18, 111, 104, .35);
+      box-shadow: inset 4px 0 0 rgba(18, 111, 104, .75);
+    }
+
+    .report-text {
+      color: #2f3a46;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .evidence {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      background: #f6f8fa;
+      border-radius: 6px;
+      padding: 8px;
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 7px;
+    }
+
+    .review-actions button {
+      flex: 1;
+      min-height: 34px;
+      font-size: 12px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+      padding: 8px 8px 10px;
+    }
+
+    .nav button {
+      min-height: 38px;
+      min-width: 64px;
+      padding: 0 8px;
+      background: transparent;
+      color: #788491;
+      font-size: 11px;
+      display: grid;
+      gap: 2px;
+      place-items: center;
+    }
+
+    .nav button.active {
+      color: var(--brand);
+      background: #edf5f4;
+    }
+
+    .side-panel {
+      background: rgba(255,255,255,.68);
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(23, 32, 42, .08);
+    }
+
+    .side-panel h2 {
+      font-size: 28px;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .side-panel p {
+      color: #435060;
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+
+    .flow-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .flow-item {
+      display: flex;
+      gap: 10px;
+      align-items: start;
+      color: #2e3a46;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .flow-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--ink);
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 0; background: #10151b; }
+      .stage { width: 100%; display: block; }
+      .phone {
+        width: 100%;
+        height: 100vh;
+        max-height: none;
+        border: 0;
+        border-radius: 0;
+      }
+      .side-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <div class="phone" aria-label="Mobile app demo">
+      <section class="screen active" id="templates">
+        <header class="topbar">
+          <div class="status"><span>09:41</span><div class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+          <div class="title-row">
+            <div>
+              <h1>Report templates</h1>
+              <p class="caption">Reusable structures for property surveys.</p>
+            </div>
+            <button class="icon-btn secondary" title="Create template">+</button>
+          </div>
+          <div class="search">Search templates, clients, report types</div>
+        </header>
+        <div class="body">
+          <p class="section-label">Recommended</p>
+          <article class="template-card">
+            <div>
+              <h2>Residential Condition Report</h2>
+              <p class="caption">Best for home surveys, defects, room notes and evidence.</p>
+            </div>
+            <div class="chip-row">
+              <span class="chip">8 sections</span>
+              <span class="chip orange">AI ready</span>
+              <span class="chip">Voice mapped</span>
+            </div>
+            <div class="template-meta"><span>Last edited today</span><span>12 reports made</span></div>
+            <button class="primary" data-go="builder">Open template</button>
+          </article>
+          <article class="template-card">
+            <div>
+              <h2>Rental Inspection</h2>
+              <p class="caption">Inventory, tenant notes, images and remedial actions.</p>
+            </div>
+            <div class="chip-row">
+              <span class="chip">6 sections</span>
+              <span class="chip">Photo heavy</span>
+            </div>
+            <div class="template-meta"><span>Updated yesterday</span><span>7 reports made</span></div>
+          </article>
+          <article class="template-card">
+            <div>
+              <h2>Valuation Visit Notes</h2>
+              <p class="caption">Comparable evidence, local market notes and valuation summary.</p>
+            </div>
+            <div class="chip-row">
+              <span class="chip">5 sections</span>
+              <span class="chip orange">Draft</span>
+            </div>
+            <div class="template-meta"><span>Needs review</span><span>3 reports made</span></div>
+          </article>
+        </div>
+        <nav class="nav">
+          <button class="active" data-go="templates"><span>Home</span></button>
+          <button data-go="builder"><span>Build</span></button>
+          <button data-go="survey"><span>Survey</span></button>
+          <button data-go="review"><span>Report</span></button>
+        </nav>
+      </section>
+
+      <section class="screen" id="builder">
+        <header class="topbar">
+          <div class="status"><span>09:42</span><div class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+          <div class="title-row">
+            <button class="icon-btn secondary" data-go="templates" title="Back">‹</button>
+            <div>
+              <h1>Template builder</h1>
+              <p class="caption">Drag blocks into the report canvas.</p>
+            </div>
+            <button class="ghost">Save</button>
+          </div>
+        </header>
+        <div class="body builder-grid">
+          <div>
+            <p class="section-label">Blocks</p>
+            <div class="toolbox">
+              <div class="tool" draggable="true" data-type="Text summary">Text summary <span>AI writes narrative</span></div>
+              <div class="tool" draggable="true" data-type="Photo evidence">Photo evidence <span>Links site images</span></div>
+              <div class="tool" draggable="true" data-type="Defects list">Defects list <span>Prioritised issues</span></div>
+              <div class="tool" draggable="true" data-type="Room table">Room table <span>Per-room condition</span></div>
+            </div>
+          </div>
+          <div>
+            <p class="section-label">Report canvas</p>
+            <div class="canvas" id="canvas">
+              <article class="block" draggable="true">
+                <div class="block-head"><h3>Executive summary</h3><span class="handle">=</span></div>
+                <p class="instruction">AI instruction: Summarise overall property condition in a professional surveyor tone.</p>
+              </article>
+              <article class="block" draggable="true">
+                <div class="block-head"><h3>Room-by-room findings</h3><span class="handle">=</span></div>
+                <p class="instruction">AI instruction: Extract room names, condition, defects and urgency from survey audio.</p>
+              </article>
+              <article class="block" draggable="true">
+                <div class="block-head"><h3>Evidence gallery</h3><span class="handle">=</span></div>
+                <p class="instruction">AI instruction: Attach relevant photos to matching issues and rooms.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+        <footer class="footer">
+          <button class="secondary" data-go="templates">Templates</button>
+          <button class="primary" data-go="survey">Start survey</button>
+        </footer>
+      </section>
+
+      <section class="screen" id="survey">
+        <header class="topbar">
+          <div class="status"><span>10:08</span><div class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+          <div class="title-row">
+            <div>
+              <h1>Live survey</h1>
+              <p class="caption">Residential Condition Report selected.</p>
+            </div>
+            <button class="icon-btn secondary" data-go="builder" title="Template">≡</button>
+          </div>
+        </header>
+        <div class="body">
+          <div class="survey-address">
+            <h2>42 Park Lane</h2>
+            <p>3 bed terrace · London · Condition survey</p>
+          </div>
+
+          <div class="quick-actions">
+            <div class="mini-card"><strong>Rooms found</strong><span class="metric" id="roomCount">0</span></div>
+            <div class="mini-card"><strong>Issues detected</strong><span class="metric" id="issueCount">0</span></div>
+          </div>
+
+          <p class="section-label">Recording</p>
+          <div class="record-panel">
+            <button class="record-ring" id="recordButton" title="Start recording">●</button>
+            <div class="timer" id="timer">00:00</div>
+            <p class="caption" id="recordHint">Tap to simulate recording a site walkthrough.</p>
+            <div class="tag-row">
+              <span class="chip">Kitchen</span>
+              <span class="chip">Bathroom</span>
+              <span class="chip orange">Maintenance</span>
+            </div>
+          </div>
+
+          <p class="section-label">Live transcript</p>
+          <div class="transcript">
+            <div class="line hidden">Kitchen has minor staining near the rear window, likely condensation rather than penetrating damp.</div>
+            <div class="line hidden">Bathroom extractor fan is noisy and should be checked during routine maintenance.</div>
+            <div class="line hidden">Living room and bedrooms are generally well presented with no significant visible cracking.</div>
+            <div class="line hidden">Recommend monitoring the kitchen window reveal and adding photographic evidence to the defects section.</div>
+          </div>
+        </div>
+        <footer class="footer">
+          <button class="secondary" data-go="builder">Builder</button>
+          <button class="primary" id="generateReport">Generate report</button>
+        </footer>
+      </section>
+
+      <section class="screen" id="processing">
+        <header class="topbar">
+          <div class="status"><span>10:15</span><div class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+          <h1>AI is populating</h1>
+          <p class="caption">Mapping audio, transcript and evidence into your template.</p>
+        </header>
+        <div class="body progress-wrap">
+          <div class="ai-mark" id="aiMark" style="--angle: 0deg"><span id="aiPercent">0%</span></div>
+          <div>
+            <h2>Building client-ready sections</h2>
+            <p class="caption">Each report block keeps its original AI instruction.</p>
+          </div>
+          <div class="progress-list">
+            <div class="step" id="step1"><span class="dot"></span><span>Transcribing survey audio</span></div>
+            <div class="step" id="step2"><span class="dot"></span><span>Detecting rooms, defects and urgency</span></div>
+            <div class="step" id="step3"><span class="dot"></span><span>Populating report template</span></div>
+            <div class="step" id="step4"><span class="dot"></span><span>Preparing review checklist</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="review">
+        <header class="topbar">
+          <div class="status"><span>10:16</span><div class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+          <div class="title-row">
+            <div>
+              <h1>Review report</h1>
+              <p class="caption">AI-filled draft ready for surveyor approval.</p>
+            </div>
+            <button class="icon-btn secondary" title="Export">⇧</button>
+          </div>
+        </header>
+        <div class="body">
+          <p class="section-label">Residential Condition Report</p>
+          <article class="report-section ai">
+            <div class="block-head"><h3>Executive summary</h3><span class="chip orange">AI filled</span></div>
+            <p class="report-text">The property is generally well presented internally. No significant structural cracking was observed from the recorded walkthrough. Minor maintenance items were noted in the kitchen and bathroom.</p>
+            <div class="evidence"><span>Sources: 4 transcript excerpts</span><span>High confidence</span></div>
+            <div class="review-actions"><button>Accept</button><button>Edit</button><button>Regenerate</button></div>
+          </article>
+          <article class="report-section ai">
+            <div class="block-head"><h3>Defects and maintenance</h3><span class="chip orange">AI filled</span></div>
+            <p class="report-text">Kitchen: minor staining near the rear window reveal, likely condensation. Bathroom: extractor fan is noisy and should be checked. Urgency is low to medium, with monitoring recommended.</p>
+            <div class="evidence"><span>Sources: audio + photo slot</span><span>Needs photo</span></div>
+            <div class="review-actions"><button>Accept</button><button>Edit</button><button>Add photo</button></div>
+          </article>
+          <article class="report-section">
+            <div class="block-head"><h3>Room-by-room findings</h3><span class="chip">Draft</span></div>
+            <p class="report-text">Living room and bedrooms are in good decorative order. Kitchen requires observation around the rear window. Bathroom ventilation should be serviced.</p>
+            <div class="evidence"><span>3 rooms detected</span><span>1 action</span></div>
+            <div class="review-actions"><button>Accept</button><button>Edit</button><button>Flag</button></div>
+          </article>
+        </div>
+        <footer class="footer">
+          <button class="secondary" data-go="survey">Survey</button>
+          <button class="primary">Export PDF</button>
+        </footer>
+      </section>
+    </div>
+
+    <aside class="side-panel">
+      <h2>Template once. Survey naturally. Review the AI report.</h2>
+      <p>This clickable demo shows the core mobile workflow for a proptech reporting product. A surveyor creates reusable report sections, records a property walkthrough, then reviews an AI-populated client report.</p>
+      <div class="flow-list">
+        <div class="flow-item"><span class="flow-num">1</span><span>Select a reusable property report template.</span></div>
+        <div class="flow-item"><span class="flow-num">2</span><span>Drag text, evidence and defect blocks into the report canvas.</span></div>
+        <div class="flow-item"><span class="flow-num">3</span><span>Record audio during the site visit and capture structured observations.</span></div>
+        <div class="flow-item"><span class="flow-num">4</span><span>Let AI populate the report while the surveyor stays in control of approval.</span></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const screens = [...document.querySelectorAll('.screen')];
+    const navButtons = [...document.querySelectorAll('[data-go]')];
+    const canvas = document.getElementById('canvas');
+    const tools = [...document.querySelectorAll('.tool')];
+    const recordButton = document.getElementById('recordButton');
+    const timer = document.getElementById('timer');
+    const recordHint = document.getElementById('recordHint');
+    const transcriptLines = [...document.querySelectorAll('.line')];
+    const roomCount = document.getElementById('roomCount');
+    const issueCount = document.getElementById('issueCount');
+    const generateReport = document.getElementById('generateReport');
+    const aiMark = document.getElementById('aiMark');
+    const aiPercent = document.getElementById('aiPercent');
+    let dragLabel = '';
+    let recording = false;
+    let seconds = 0;
+    let timerId = null;
+    let transcriptId = null;
+
+    function showScreen(id) {
+      screens.forEach(screen => screen.classList.toggle('active', screen.id === id));
+      document.querySelectorAll('.nav button').forEach(button => {
+        button.classList.toggle('active', button.dataset.go === id);
+      });
+      if (id === 'processing') runProcessing();
+    }
+
+    navButtons.forEach(button => {
+      button.addEventListener('click', () => showScreen(button.dataset.go));
+    });
+
+    tools.forEach(tool => {
+      tool.addEventListener('dragstart', event => {
+        dragLabel = tool.dataset.type;
+        event.dataTransfer.setData('text/plain', dragLabel);
+      });
+      tool.addEventListener('click', () => addBlock(tool.dataset.type));
+    });
+
+    canvas.addEventListener('dragover', event => {
+      event.preventDefault();
+      canvas.classList.add('drag-over');
+    });
+
+    canvas.addEventListener('dragleave', () => canvas.classList.remove('drag-over'));
+
+    canvas.addEventListener('drop', event => {
+      event.preventDefault();
+      canvas.classList.remove('drag-over');
+      addBlock(event.dataTransfer.getData('text/plain') || dragLabel || 'Text summary');
+    });
+
+    function addBlock(label) {
+      const block = document.createElement('article');
+      block.className = 'block';
+      block.draggable = true;
+      block.innerHTML = `
+        <div class="block-head"><h3>${label}</h3><span class="handle">=</span></div>
+        <p class="instruction">AI instruction: Pull relevant observations from audio, notes and photos into this section.</p>
+      `;
+      canvas.appendChild(block);
+      block.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    recordButton.addEventListener('click', () => {
+      recording ? stopRecording() : startRecording();
+    });
+
+    function startRecording() {
+      recording = true;
+      seconds = 0;
+      transcriptLines.forEach(line => line.classList.add('hidden'));
+      recordButton.classList.add('recording');
+      recordHint.textContent = 'Recording walkthrough audio and detecting report topics.';
+      roomCount.textContent = '0';
+      issueCount.textContent = '0';
+      timer.textContent = '00:00';
+      timerId = setInterval(() => {
+        seconds += 1;
+        timer.textContent = `00:${String(seconds).padStart(2, '0')}`;
+      }, 1000);
+      let index = 0;
+      transcriptId = setInterval(() => {
+        if (index < transcriptLines.length) {
+          transcriptLines[index].classList.remove('hidden');
+          roomCount.textContent = String(Math.min(3, index + 1));
+          issueCount.textContent = String(index > 0 ? 2 : 1);
+          index += 1;
+        } else {
+          stopRecording();
+        }
+      }, 1200);
+    }
+
+    function stopRecording() {
+      recording = false;
+      clearInterval(timerId);
+      clearInterval(transcriptId);
+      recordButton.classList.remove('recording');
+      recordHint.textContent = 'Recording captured. Generate the AI report when ready.';
+      transcriptLines.forEach(line => line.classList.remove('hidden'));
+      roomCount.textContent = '3';
+      issueCount.textContent = '2';
+    }
+
+    generateReport.addEventListener('click', () => {
+      if (recording) stopRecording();
+      showScreen('processing');
+    });
+
+    function runProcessing() {
+      const steps = [1, 2, 3, 4].map(n => document.getElementById(`step${n}`));
+      steps.forEach(step => step.classList.remove('done'));
+      let progress = 0;
+      aiMark.style.setProperty('--angle', '0deg');
+      aiPercent.textContent = '0%';
+      const id = setInterval(() => {
+        progress += 5;
+        aiMark.style.setProperty('--angle', `${progress * 3.6}deg`);
+        aiPercent.textContent = `${progress}%`;
+        if (progress >= 25) steps[0].classList.add('done');
+        if (progress >= 50) steps[1].classList.add('done');
+        if (progress >= 75) steps[2].classList.add('done');
+        if (progress >= 100) {
+          steps[3].classList.add('done');
+          clearInterval(id);
+          setTimeout(() => showScreen('review'), 550);
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>
